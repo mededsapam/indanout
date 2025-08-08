@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <meta charset="UTF-8" />
+    <title>Daily Report</title>
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css"
@@ -14,26 +16,138 @@
         </div>
       </div>
     </section>
+
     <form id="form" class="container m-4 pl-4" method="POST">
       <div class="field">
         <label class="label">Hari/Tanggal</label>
         <div class="control">
-          <input
-            class="input"
-            type="text"
-            placeholder="Hari/Tanggal"
-            name="Hari/Tanggal"
-          />
+          <input class="input" type="text" placeholder="Hari/Tanggal" name="Hari/Tanggal" required />
         </div>
       </div>
-
 
       <div class="field">
         <label class="label">Jam</label>
         <div class="control">
-          <input
-            class="input"
-            type="text"
+          <input class="input" type="text" placeholder="Jam" name="Jam" required />
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="label">Material dan Jumlah</label>
+        <div class="control">
+          <input class="input" type="text" placeholder="Material dan Jumlah" name="Material dan Jumlah" required />
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="label">Keterangan</label>
+        <div class="control">
+          <input class="input" type="text" placeholder="Keterangan" name="Keterangan" required />
+        </div>
+      </div>
+
+      <div class="field is-grouped">
+        <div class="control">
+          <button class="button is-primary" type="submit" id="submit-button">ENTER</button>
+        </div>
+        <div class="control">
+          <button class="button is-danger" type="reset">Cancel</button>
+        </div>
+      </div>
+    </form>
+
+    <div
+      id="message"
+      style="display: none; margin: 20px; font-weight: bold; color: green; padding: 8px; background-color: beige; border-radius: 4px; border-color: aquamarine;"
+    ></div>
+
+    <script>
+      window.onload = function () {
+        const form = document.getElementById("form");
+        const message = document.getElementById("message");
+        const submitButton = document.getElementById("submit-button");
+
+        submitButton.disabled = true;
+        message.style.display = "block";
+        message.textContent = "Menunggu lokasi GPS akurat...";
+
+        navigator.geolocation.getCurrentPosition(
+          function (position) {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+
+            const latInput = document.createElement("input");
+            latInput.type = "hidden";
+            latInput.name = "latitude";
+            latInput.value = lat;
+
+            const lonInput = document.createElement("input");
+            lonInput.type = "hidden";
+            lonInput.name = "longitude";
+            lonInput.value = lon;
+
+            form.appendChild(latInput);
+            form.appendChild(lonInput);
+
+            message.textContent = "Lokasi akurat ditemukan. Mengirim data...";
+            submitForm();
+          },
+          function (error) {
+            console.error("Lokasi gagal:", error);
+            message.textContent = "Gagal mendapatkan lokasi. Pastikan izin GPS aktif.";
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+          }
+        );
+
+        function submitForm() {
+          const formData = new FormData(form);
+          const keyValuePairs = [];
+          for (const pair of formData.entries()) {
+            keyValuePairs.push(pair[0] + "=" + pair[1]);
+          }
+
+          const formDataString = keyValuePairs.join("&");
+
+          fetch(
+            "https://script.google.com/macros/s/AKfycbyET9ITEquXH5xnrzOBXZEP4C7_9q7u3zyz3SrzKaA3SZVNMb-gHTAQf0Rn6jgnWtNO4w/exec",
+            {
+              method: "POST",
+              body: formDataString,
+              headers: {
+                "Content-Type": "text/plain;charset=utf-8",
+              },
+            }
+          )
+            .then(function (response) {
+              if (response) {
+                message.textContent = "Data berhasil dikirim!";
+                message.style.backgroundColor = "green";
+                message.style.color = "beige";
+                form.reset();
+              } else {
+                throw new Error("Gagal mengirim.");
+              }
+            })
+            .catch(function (error) {
+              console.error(error);
+              message.textContent = "Terjadi kesalahan saat mengirim.";
+            })
+            .finally(() => {
+              submitButton.disabled = false;
+              setTimeout(() => {
+                message.textContent = "";
+                message.style.display = "none";
+              }, 2500);
+            });
+        }
+      };
+    </script>
+  </body>
+</html>
             placeholder="Jam"
             name="Jam"
           />
