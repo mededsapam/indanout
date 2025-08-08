@@ -1,90 +1,18 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8" />
-  <title>Form Laporan</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laporan Barang</title>
 </head>
 <body>
-  <section class="hero is-primary is-bold">
-    <div class="hero-body">
-      <div class="container">
-        <h1 class="title">DAILY REPORT SEIJKT11</h1>
-      </div>
-    </div>
-  </section>
-
-  <form id="form" class="container m-4 pl-4" method="POST">
-    <div class="field">
-      <label class="label">Hari/Tanggal</label>
-      <div class="control">
-        <input class="input" type="text" name="Hari/Tanggal" placeholder="Hari/Tanggal" required />
-      </div>
-    </div>
-
-    <div class="field">
-      <label class="label">Jam</label>
-      <div class="control">
-        <input class="input" type="text" name="Jam" placeholder="Jam" required />
-      </div>
-    </div>
-
-    <div class="field">
-      <label class="label">Material dan Jumlah</label>
-      <div class="control">
-        <input class="input" type="text" name="Material dan Jumlah" placeholder="Material dan Jumlah" required />
-      </div>
-    </div>
-
-    <div class="field">
-      <label class="label">Keterangan</label>
-      <div class="control">
-        <input class="input" type="text" name="Keterangan" placeholder="Keterangan" required />
-      </div>
-    </div>
-
-    <div class="field is-grouped">
-      <div class="control">
-        <button class="button is-primary" type="submit" id="submit-button">Submit</button>
-      </div>
-    </div>
-  </form>
-
-  <div id="message" style="display: none; margin: 20px; font-weight: bold; color: green;"></div>
-
-  <script>
-    document.getElementById("form").addEventListener("submit", function (e) {
-      e.preventDefault();
-      const form = document.getElementById("form");
-      const message = document.getElementById("message");
-      const formData = new FormData(form);
-      const keyValuePairs = [];
-
-      for (const pair of formData.entries()) {
-        keyValuePairs.push(pair[0] + "=" + pair[1]);
-      }
-
-      const body = keyValuePairs.join("&");
-
-      fetch("https://script.google.com/macros/s/AKfycbyET9ITEquXH5xnrzOBXZEP4C7_9q7u3zyz3SrzKaA3SZVNMb-gHTAQf0Rn6jgnWtNO4w/exec", {
-        method: "POST",
-        body: body,
-        headers: { "Content-Type": "text/plain;charset=utf-8" }
-      })
-      .then(res => {
-        message.style.display = "block";
-        message.textContent = "Data berhasil dikirim!";
-        form.reset();
-        setTimeout(() => {
-          message.style.display = "none";
-        }, 5000);
-      })
-      .catch(err => {
-        console.error(err);
-        message.textContent = "Gagal kirim data.";
-        message.style.display = "block";
-      });
-    });
-  </script>
+<h2>Form Laporan Barang</h2>
+<form action="https://script.google.com/macros/s/AKfycbyET9ITEquXH5xnrzOBXZEP4C7_9q7u3zyz3SrzKaA3SZVNMb-gHTAQf0Rn6jgnWtNO4w/exec" method="POST">
+  Hari/Tanggal: <input type="text" name="tanggal"><br><br>
+  Jam: <input type="text" name="jam"><br><br>
+  Material dan Jumlah: <input type="text" name="material"><br><br>
+  Keterangan: <input type="text" name="keterangan"><br><br>
+  <button type="submit">Submit</button>
+</form>
 </body>
 </html>
+
