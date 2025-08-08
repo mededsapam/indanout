@@ -1,270 +1,90 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8" />
-    <title>Daily Report</title>
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css"
-    />
-  </head>
-  <body>
-    <section class="hero is-primary is-bold">
-      <div class="hero-body">
-        <div class="container">
-          <h1 class="title">DAILY REPORT SEIJKT11</h1>
-        </div>
+<head>
+  <meta charset="UTF-8" />
+  <title>Form Laporan</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" />
+</head>
+<body>
+  <section class="hero is-primary is-bold">
+    <div class="hero-body">
+      <div class="container">
+        <h1 class="title">DAILY REPORT SEIJKT11</h1>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <form id="form" class="container m-4 pl-4" method="POST">
-      <div class="field">
-        <label class="label">Hari/Tanggal</label>
-        <div class="control">
-          <input class="input" type="text" placeholder="Hari/Tanggal" name="Hari/Tanggal" required />
-        </div>
+  <form id="form" class="container m-4 pl-4" method="POST">
+    <div class="field">
+      <label class="label">Hari/Tanggal</label>
+      <div class="control">
+        <input class="input" type="text" name="Hari/Tanggal" placeholder="Hari/Tanggal" required />
       </div>
+    </div>
 
-      <div class="field">
-        <label class="label">Jam</label>
-        <div class="control">
-          <input class="input" type="text" placeholder="Jam" name="Jam" required />
-        </div>
+    <div class="field">
+      <label class="label">Jam</label>
+      <div class="control">
+        <input class="input" type="text" name="Jam" placeholder="Jam" required />
       </div>
+    </div>
 
-      <div class="field">
-        <label class="label">Material dan Jumlah</label>
-        <div class="control">
-          <input class="input" type="text" placeholder="Material dan Jumlah" name="Material dan Jumlah" required />
-        </div>
+    <div class="field">
+      <label class="label">Material dan Jumlah</label>
+      <div class="control">
+        <input class="input" type="text" name="Material dan Jumlah" placeholder="Material dan Jumlah" required />
       </div>
+    </div>
 
-      <div class="field">
-        <label class="label">Keterangan</label>
-        <div class="control">
-          <input class="input" type="text" placeholder="Keterangan" name="Keterangan" required />
-        </div>
+    <div class="field">
+      <label class="label">Keterangan</label>
+      <div class="control">
+        <input class="input" type="text" name="Keterangan" placeholder="Keterangan" required />
       </div>
+    </div>
 
-      <div class="field is-grouped">
-        <div class="control">
-          <button class="button is-primary" type="submit" id="submit-button">ENTER</button>
-        </div>
-        <div class="control">
-          <button class="button is-danger" type="reset">Cancel</button>
-        </div>
+    <div class="field is-grouped">
+      <div class="control">
+        <button class="button is-primary" type="submit" id="submit-button">Submit</button>
       </div>
-    </form>
+    </div>
+  </form>
 
-    <div
-      id="message"
-      style="display: none; margin: 20px; font-weight: bold; color: green; padding: 8px; background-color: beige; border-radius: 4px; border-color: aquamarine;"
-    ></div>
+  <div id="message" style="display: none; margin: 20px; font-weight: bold; color: green;"></div>
 
-    <script>
-      window.onload = function () {
-        const form = document.getElementById("form");
-        const message = document.getElementById("message");
-        const submitButton = document.getElementById("submit-button");
+  <script>
+    document.getElementById("form").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const form = document.getElementById("form");
+      const message = document.getElementById("message");
+      const formData = new FormData(form);
+      const keyValuePairs = [];
 
-        submitButton.disabled = true;
+      for (const pair of formData.entries()) {
+        keyValuePairs.push(pair[0] + "=" + pair[1]);
+      }
+
+      const body = keyValuePairs.join("&");
+
+      fetch("https://script.google.com/macros/s/AKfycbyET9ITEquXH5xnrzOBXZEP4C7_9q7u3zyz3SrzKaA3SZVNMb-gHTAQf0Rn6jgnWtNO4w/exec", {
+        method: "POST",
+        body: body,
+        headers: { "Content-Type": "text/plain;charset=utf-8" }
+      })
+      .then(res => {
         message.style.display = "block";
-        message.textContent = "Menunggu lokasi GPS akurat...";
-
-        navigator.geolocation.getCurrentPosition(
-          function (position) {
-            const lat = position.coords.latitude;
-            const lon = position.coords.longitude;
-
-            const latInput = document.createElement("input");
-            latInput.type = "hidden";
-            latInput.name = "latitude";
-            latInput.value = lat;
-
-            const lonInput = document.createElement("input");
-            lonInput.type = "hidden";
-            lonInput.name = "longitude";
-            lonInput.value = lon;
-
-            form.appendChild(latInput);
-            form.appendChild(lonInput);
-
-            message.textContent = "Lokasi akurat ditemukan. Mengirim data...";
-            submitForm();
-          },
-          function (error) {
-            console.error("Lokasi gagal:", error);
-            message.textContent = "Gagal mendapatkan lokasi. Pastikan izin GPS aktif.";
-          },
-          {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 0
-          }
-        );
-
-        function submitForm() {
-          const formData = new FormData(form);
-          const keyValuePairs = [];
-          for (const pair of formData.entries()) {
-            keyValuePairs.push(pair[0] + "=" + pair[1]);
-          }
-
-          const formDataString = keyValuePairs.join("&");
-
-          fetch(
-            "https://script.google.com/macros/s/AKfycbyET9ITEquXH5xnrzOBXZEP4C7_9q7u3zyz3SrzKaA3SZVNMb-gHTAQf0Rn6jgnWtNO4w/exec",
-            {
-              method: "POST",
-              body: formDataString,
-              headers: {
-                "Content-Type": "text/plain;charset=utf-8",
-              },
-            }
-          )
-            .then(function (response) {
-              if (response) {
-                message.textContent = "Data berhasil dikirim!";
-                message.style.backgroundColor = "green";
-                message.style.color = "beige";
-                form.reset();
-              } else {
-                throw new Error("Gagal mengirim.");
-              }
-            })
-            .catch(function (error) {
-              console.error(error);
-              message.textContent = "Terjadi kesalahan saat mengirim.";
-            })
-            .finally(() => {
-              submitButton.disabled = false;
-              setTimeout(() => {
-                message.textContent = "";
-                message.style.display = "none";
-              }, 2500);
-            });
-        }
-      };
-    </script>
-  </body>
-</html>
-            placeholder="Jam"
-            name="Jam"
-          />
-        </div>
-      </div>
-
-
-      <div class="field">
-        <label class="label">Material dan Jumlah</label>
-        <div class="control">
-          <input
-            class="input"
-            type="text"
-            placeholder="Material dan Jumlah"
-            name="Material dan Jumlah"
-          />
-        </div>
-      </div>
-
-
-      <div class="field">
-        <label class="label">Keterangan</label>
-        <div class="control">
-          <input
-            class="input"
-            type="text"
-            placeholder="Keterangan"
-            name="Keterangan"
-          />
-        </div>
-      </div>
-
-
-      <div class="field is-grouped">
-        <div class="control">
-          <button class="button is-primary" type="submit" id="submit-button">
-            ENTER
-          </button>
-        </div>
-        <div class="control">
-          <button class="button is-danger">Cancel</button>
-        </div>
-      </div>
-    </form>
-    <div
-      id="message"
-      style="
-        display: none;
-        margin: 20px;
-        font-weight: bold;
-        color: green;
-        padding: 8px;
-        background-color: beige;
-        border-radius: 4px;
-        border-color: aquamarine;
-      "
-    ></div>
-
-    <script>
-      document.getElementById("form").addEventListener("submit", function (e) {
-        e.preventDefault(); // Prevent the default form submission
-        document.getElementById("message").textContent = "Submitting..";
-        document.getElementById("message").style.display = "block";
-        document.getElementById("submit-button").disabled = true;
-
-        // Collect the form data
-        var formData = new FormData(this);
-        var keyValuePairs = [];
-        for (var pair of formData.entries()) {
-          keyValuePairs.push(pair[0] + "=" + pair[1]);
-        }
-
-        var formDataString = keyValuePairs.join("&");
-
-        // Send a POST request to your Google Apps Script
-        fetch(
-          "https://script.google.com/macros/s/AKfycbyET9ITEquXH5xnrzOBXZEP4C7_9q7u3zyz3SrzKaA3SZVNMb-gHTAQf0Rn6jgnWtNO4w/exec",
-          {
-            redirect: "follow",
-            method: "POST",
-            body: formDataString,
-            headers: {
-              "Content-Type": "text/plain;charset=utf-8",
-            },
-          }
-        )
-          .then(function (response) {
-            // Check if the request was successful
-            if (response) {
-              return response; // Assuming your script returns JSON response
-            } else {
-              throw new Error("Failed to submit the form.");
-            }
-          })
-          .then(function (data) {
-            // Display a success message
-            document.getElementById("message").textContent =
-              "Data submitted successfully!";
-            document.getElementById("message").style.display = "block";
-            document.getElementById("message").style.backgroundColor = "green";
-            document.getElementById("message").style.color = "beige";
-            document.getElementById("submit-button").disabled = false;
-            document.getElementById("form").reset();
-
-            setTimeout(function () {
-              document.getElementById("message").textContent = "";
-              document.getElementById("message").style.display = "none";
-            }, 2600);
-          })
-          .catch(function (error) {
-            // Handle errors, you can display an error message here
-            console.error(error);
-            document.getElementById("message").textContent =
-              "An error occurred while submitting the form.";
-            document.getElementById("message").style.display = "block";
-          });
+        message.textContent = "Data berhasil dikirim!";
+        form.reset();
+        setTimeout(() => {
+          message.style.display = "none";
+        }, 5000);
+      })
+      .catch(err => {
+        console.error(err);
+        message.textContent = "Gagal kirim data.";
+        message.style.display = "block";
       });
-    </script>
-  </body>
+    });
+  </script>
+</body>
 </html>
